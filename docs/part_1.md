@@ -6,8 +6,7 @@ This guide documents a simple Prometheus PushGateway setup on top of [Civo's k3s
 
 The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components. The subsequent blogs will document building a native kubernetes operator to manage the sensor inputs.
 
-![Civo IOT Design](screenshots/project.png)
-
+![Civo IOT Design](https://github.com/gabeduke/civo-iot/blob/master/docs/screenshots/project.png?raw=true)
 ---
 
 ## Table of Contents
@@ -23,7 +22,6 @@ The end result for this project is an environmental monitoring system that gathe
         - [Setup](#setup)
     - [Provision Cluster](#provision-cluster)
     - [Deploy Core Applications](#deploy-core-applications)
-        - [Install Prometheus-Operator](#install-prometheus-operator)
         - [Install Grafana](#install-grafana)
         - [Install Prometheus](#install-prometheus)
         - [Install Push-Gateway](#install-push-gateway)
@@ -54,7 +52,7 @@ Components:
 
 | Tool                                                               | Version   |
 |--------------------------------------------------------------------|-----------|
-| [Docker](https://www.docker.com/)                                  | 19.03.3   |
+| [Civo-CLI](https://github.com/civo/cli#set-up)                                  | v0.5.1   |
 | [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) | v1.16.3   |
 
 **Notes**:
@@ -79,41 +77,23 @@ This will take a couple minutes, once finished the `--save` flag wil point your 
 
 ```bash
 civo kubernetes create \
+    --applications prometheus-operator \
     --nodes 2 \
     --save --switch --wait \
     ${CLUSTER_NAME}
 ```
 
+We are initializing the cluster with the `prometheus-operator` application from the [Civo Marketplace](https://github.com/civo/kubernetes-marketplace). Once the cluster has finished booting you can explore the default cluster monitors, provisioned by the prometheus operator. First port-forward to the grafana instance: `kubectl port-forward svc/prometheus-operator-grafana 8080:80 --namespace monitoring` and navigate to `http://localhost:8080` . You can log in with the username `admin` and the password `prom-operator`. Not every dashboard will work since the k3s distribution has a slightly different topology then a vanilla kubernetes cluster.
+
+In the next steps we will provision our own instances of Prometheus and Grafana.
+
 ## Deploy Core Applications
 
 The stack consists of a few core applications, and jobs to fetch the data. 
 
-- **Prometheus-Operator**: will orchestrate the prometheus and pushgateway deployments through the use of CRDs. 
 - **Grafana**: is a powerful visualization tool we will use for displaying our metrics. This could be considered the 'frontend' of our application.
 - **Prometheus**: is a time-series database that scales incredibly well. This is our 'backend'. Prometheus is generally configured to scrape metrics data from applications on regular intervals.
 - **PushGateway**: is a 'sink' or 'buffer' for metric data that is too short lived for Prometheus to scrape. This is what our cron jobs will log data to since the containers wont live long enough for Prometheus to ever see them.
-
-### Install Prometheus-Operator
-
-```bash
-
-# deploy/charts/prometheus-operator.yaml
-#
-cat <<EOF > /tmp/prometheus-operator.yaml
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: prometheus-operator
-  namespace: kube-system
-spec:
-  chart: stable/prometheus-operator
-  version: 8.2.0
-  targetNamespace: monitoring
-EOF
-
-# Apply the chart
-kubectl apply -f /tmp/prometheus-operator.yaml
-```
 
 ### Install Grafana
 
@@ -230,7 +210,7 @@ http://localhost:9091
 
 Notice there is a new group for `sanity-test` and the data point `sample_metric` is equal to 1.
 
-![](screenshots/pushgateway.png)
+![](https://github.com/gabeduke/civo-iot/blob/master/docs/screenshots/pushgateway.png?raw=true)
 
 To see the raw metrics that prometheus will scrape, navigate to http://localhost:9091/metrics and notice the new line:
 
@@ -245,7 +225,7 @@ http://localhost:9090
 
 Prometheus is where the data will be aggregated and we can perform queries over time. Since we only have a single data point we will see a line in the graph when searching for `sample_metric`. As we build out the monitoring system we can add CRDs to generate alerts on our data.
 
-![](screenshots/prometheus.png)
+![](https://github.com/gabeduke/civo-iot/blob/master/docs/screenshots/prometheus.png?raw=true)
 
 ### Visualize in Grafana
 
@@ -257,7 +237,7 @@ Log in with the username `admin` and password will be `${PASSWORD}`. Again the v
 
 To validate our sample metric we are going to use the _Explore_ function. Navigate to http://localhost:8080/explore 
 
-![](screenshots/grafana_explore.png)
+![](https://github.com/gabeduke/civo-iot/blob/master/docs/screenshots/grafana_explore.png?raw=true)
 
 ## Wrapping up
 
