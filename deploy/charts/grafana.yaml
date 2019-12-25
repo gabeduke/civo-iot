@@ -7,6 +7,8 @@ spec:
   chart: stable/grafana
   version: 4.0.4
   targetNamespace: default
+  set:
+    metrics.enabled: "true"
   valuesContent: |-
     datasources: 
       datasources.yaml:
@@ -17,3 +19,7 @@ spec:
           url: http://prometheus-operated:9090
           access: proxy
           isDefault: true
+    ingress:
+      enabled: "true"
+      hosts:
+        - "cdd3a598-e11f-4de5-8586-dcb73e192d67.k8s.civo.com"

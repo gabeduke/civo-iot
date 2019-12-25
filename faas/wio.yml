@@ -1,0 +1,95 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://cdd3a598-e11f-4de5-8586-dcb73e192d67.k8s.civo.com:31112
+functions:
+  fahrenheit:
+    lang: dockerfile
+    handler: ./wio
+    image: dukeman/wio:1.0.0
+    annotations:
+      topic: cron-function
+      schedule: "* * * * *"
+    environment_file:
+    - env.yml
+    environment:
+      # wio1
+      TOKEN: "$(cat /var/openfaas/secrets/wio1)"
+      TARGET_SENSOR: GroveTempHumD0
+      TARGET_SENSOR_PATH: temperature_f
+      TARGET_READING_KEY: fahrenheit_degree
+  celsius:
+    lang: dockerfile
+    handler: ./wio
+    image: dukeman/wio:1.0.0
+    annotations:
+      topic: cron-function
+      schedule: "* * * * *"
+    environment_file:
+    - env.yml
+    environment:
+      # wio1
+      TOKEN: "$(cat /var/openfaas/secrets/wio1)"
+      TARGET_SENSOR: GroveTempHumD0
+      TARGET_SENSOR_PATH: temperature
+      TARGET_READING_KEY: celsius_degree
+  lux:
+    lang: dockerfile
+    handler: ./wio
+    image: dukeman/wio:1.0.0
+    annotations:
+      topic: cron-function
+      schedule: "* * * * *"
+    environment_file:
+    - env.yml
+    environment:
+      # wio2
+      TOKEN: "$(cat /var/openfaas/secrets/wio2)"
+      TARGET_SENSOR: GroveDigitalLightI2C0
+      TARGET_SENSOR_PATH: lux
+      TARGET_READING_KEY: lux
+  air-quality:
+    lang: dockerfile
+    handler: ./wio
+    image: dukeman/wio:1.0.0
+    annotations:
+      topic: cron-function
+      schedule: "* * * * *"
+    environment_file:
+    - env.yml
+    environment:
+      # wio2
+      TOKEN: "$(cat /var/openfaas/secrets/wio2)"
+      TARGET_SENSOR: GroveAirqualityA0
+      TARGET_SENSOR_PATH: quality
+      TARGET_READING_KEY: quality
+  humidity:
+    lang: dockerfile
+    handler: ./wio
+    image: dukeman/wio:1.0.0
+    annotations:
+      topic: cron-function
+      schedule: "* * * * *"
+    environment_file:
+    - env.yml
+    environment:
+      # wio1
+      TOKEN: "$(cat /var/openfaas/secrets/wio1)"
+      TARGET_SENSOR: GroveTempHumD0
+      TARGET_SENSOR_PATH: humidity
+      TARGET_READING_KEY: humidity
+  moisture:
+    lang: dockerfile
+    handler: ./wio
+    image: dukeman/wio:1.0.0
+    annotations:
+      topic: cron-function
+      schedule: "* * * * *"
+    environment_file:
+    - env.yml
+    environment:
+      # wio3
+      TOKEN: "$(cat /var/openfaas/secrets/wio3)"
+      TARGET_SENSOR: GenericAInA0
+      TARGET_SENSOR_PATH: analog
+      TARGET_READING_KEY: analog
