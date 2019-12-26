@@ -11,13 +11,6 @@ push:
 deploy:
 	faas deploy $(FAAS_BUILD_ARGS) -f wio.yml
 
+up: export DOCKER_BUILDKIT=1
 up:
 	faas up $(FAAS_BUILD_ARGS) -f wio.yml
-
-run:
-	docker run -p 8089:8080 -p 8081:8081 -it dukeman/wio:latest
-
-cron-connector:
-	curl -s https://raw.githubusercontent.com/openfaas-incubator/cron-connector/master/yaml/kubernetes/connector-dep.yml | kubectl apply -f - 
-
-

@@ -49,11 +49,15 @@ provision:												## Provision Cluster
 
 deploy-grafana:											## Deploy Grafana
 	$(info Deploying Grafana)
-	kubectl apply -f deploy/charts/grafana.yaml
+	kubectl apply -f deploy/grafana
 
 deploy-prometheus:										## Deploy Prometheus
 	$(info Deploying Prometheus)
-	kubectl kustomize deploy/manifest/prometheus | kubectl apply -n $(NAMESPACE) -f -
+	kubectl kustomize deploy/prometheus | kubectl apply -n $(NAMESPACE) -f -
+
+deploy-prometheus-operator:											## Deploy Grafana
+	$(info Deploying Prometheus Operator)
+	kubectl apply -f deploy/prometheus-operator
 
 deploy-pushgateway:										## Deploy Push Gateway
 	$(info Deploying Push Gateway)
