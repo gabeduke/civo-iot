@@ -47,9 +47,18 @@ provision:												## Provision Cluster
 ##########################################################
 .PHONY: deploy-grafana deploy-prometheus deploy-pushgateway deploy-all
 
+deploy-cron-connector:									## Deploy Cron Connector
+	$(info Deploying Cron Connector)
+	kubectl apply -f deploy/cron-connector
+
 deploy-grafana:											## Deploy Grafana
 	$(info Deploying Grafana)
-	kubectl apply -f deploy/grafana
+	docker run -it \
+		--env-file .env \
+		--volume $(CURDIR):/home \
+		--workdir /home \
+		jwilder/dockerize -template deploy/grafana/grafana.yaml | kubectl apply -f -
+	kubectl apply -f deploy/grafana/fleet-dashboard.yaml
 
 deploy-prometheus:										## Deploy Prometheus
 	$(info Deploying Prometheus)
@@ -61,7 +70,7 @@ deploy-prometheus-operator:											## Deploy Grafana
 
 deploy-pushgateway:										## Deploy Push Gateway
 	$(info Deploying Push Gateway)
-	kubectl apply -f deploy/charts/pushgateway.yaml
+	kubectl apply -f deploy/pushgateway
 
 deploy-all: 											## Deploy all applications
 deploy-all: deploy-grafana deploy-prometheus deploy-pushgateway

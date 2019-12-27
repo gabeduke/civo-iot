@@ -1,0 +1,45 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: grafana
+  namespace: kube-system
+spec:
+  chart: stable/grafana
+  version: 4.0.4
+  targetNamespace: default
+  valuesContent: |-
+    datasources: 
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-operated:9090
+          access: proxy
+          isDefault: true
+    adminPassword: "{{ .Env.ADMIN_PASSWORD }}"
+    metrics:
+      enabled: "true"
+    ingress:
+      enabled: "true"
+      hosts:
+        - "cdd3a598-e11f-4de5-8586-dcb73e192d67.k8s.civo.com"
+    sidecar:
+      dashboards:
+        enabled: true
+        label: fleet-metrics
+    notifiers:
+      notifiers.yaml:
+        notifiers:
+        - name: default
+          type: slack
+          uid: default
+          org_id: 1
+          is_default: true
+          send_reminder: true
+          frequency: 1h
+          disable_resolve_message: false
+          settings:
+            recipient: "dukeman_alerts"
+            uploadImage: true
+            url: "{{ .Env.SLACK_URL }}"
