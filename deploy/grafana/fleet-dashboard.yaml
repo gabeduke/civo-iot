@@ -23,7 +23,6 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "id": 1,
       "links": [],
       "panels": [
         {
@@ -154,8 +153,8 @@ data:
               }
             ],
             "executionErrorState": "alerting",
-            "for": "5m",
-            "frequency": "1m",
+            "for": "",
+            "frequency": "10m",
             "handler": 1,
             "name": "Moisture alert",
             "noDataState": "no_data",
@@ -606,7 +605,7 @@ data:
         "list": []
       },
       "time": {
-        "from": "now-2d",
+        "from": "now-1h",
         "to": "now"
       },
       "timepicker": {
@@ -623,8 +622,8 @@ data:
           "1d"
         ]
       },
-      "timezone": "",
+      "timezone": "utc",
       "title": "Fleet Metrics",
       "uid": "1XtjCAfWz",
-      "version": 5
+      "version": 1
     }

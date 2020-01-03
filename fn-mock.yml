@@ -1,9 +1,9 @@
 version: 1.0
 provider:
   name: openfaas
-  gateway: http://cdd3a598-e11f-4de5-8586-dcb73e192d67.k8s.civo.com:31112
+  # gateway: http://localhost:8080
 functions:
-  fahrenheit:
+  mock-fahrenheit:
     lang: dockerfile
     handler: ./wio
     image: dukeman/wio:1.0.0
@@ -11,16 +11,15 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/base-env.yml
-    secrets:
-    - wio1
+    - wio/env-mock.yml
     environment:
-      TOKEN_PATH: "/var/openfaas/secrets/wio1"
       TARGET_SENSOR: GroveTempHumD0
       TARGET_SENSOR_PATH: temperature_f
       TARGET_READING_KEY: fahrenheit_degree
       write_debug: "true"
-  celsius:
+    constraints:
+      - "kubernetes.io/arch=amd64"
+  mock-celsius:
     lang: dockerfile
     handler: ./wio
     image: dukeman/wio:1.0.0
@@ -28,16 +27,15 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/base-env.yml
-    secrets:
-    - wio1
+    - wio/env-mock.yml
     environment:
-      TOKEN_PATH: "/var/openfaas/secrets/wio1"
       TARGET_SENSOR: GroveTempHumD0
       TARGET_SENSOR_PATH: temperature
       TARGET_READING_KEY: celsius_degree
       write_debug: "true"
-  lux:
+    constraints:
+      - "kubernetes.io/arch=amd64"
+  mock-lux:
     lang: dockerfile
     handler: ./wio
     image: dukeman/wio:1.0.0
@@ -45,16 +43,15 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/base-env.yml
-    secrets:
-    - wio2
+    - wio/env-mock.yml
     environment:
-      TOKEN_PATH: "/var/openfaas/secrets/wio2"
       TARGET_SENSOR: GroveDigitalLightI2C0
       TARGET_SENSOR_PATH: lux
       TARGET_READING_KEY: lux
       write_debug: "true"
-  air-quality:
+    constraints:
+      - "kubernetes.io/arch=amd64"
+  mock-air-quality:
     lang: dockerfile
     handler: ./wio
     image: dukeman/wio:1.0.0
@@ -62,16 +59,15 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/base-env.yml
-    secrets:
-    - wio2
+    - wio/env-mock.yml
     environment:
-      TOKEN_PATH: "/var/openfaas/secrets/wio2"
       TARGET_SENSOR: GroveAirqualityA0
       TARGET_SENSOR_PATH: quality
       TARGET_READING_KEY: quality
       write_debug: "true"
-  humidity:
+    constraints:
+      - "kubernetes.io/arch=amd64"
+  mock-humidity:
     lang: dockerfile
     handler: ./wio
     image: dukeman/wio:1.0.0
@@ -79,16 +75,15 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/base-env.yml
-    secrets:
-    - wio1
+    - wio/env-mock.yml
     environment:
-      TOKEN_PATH: "/var/openfaas/secrets/wio1"
       TARGET_SENSOR: GroveTempHumD0
       TARGET_SENSOR_PATH: humidity
       TARGET_READING_KEY: humidity
       write_debug: "true"
-  moisture:
+    constraints:
+      - "kubernetes.io/arch=amd64"
+  mock-moisture:
     lang: dockerfile
     handler: ./wio
     image: dukeman/wio:1.0.0
@@ -96,12 +91,11 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/base-env.yml
-    secrets:
-    - wio3
+    - wio/env-mock.yml
     environment:
-      TOKEN_PATH: "/var/openfaas/secrets/wio3"
       TARGET_SENSOR: GenericAInA0
       TARGET_SENSOR_PATH: analog
       TARGET_READING_KEY: analog
       write_debug: "true"
+    constraints:
+      - "kubernetes.io/arch=amd64"

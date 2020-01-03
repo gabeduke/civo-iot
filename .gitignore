@@ -1,3 +1,4 @@
 .env
 template
 build
+secret-*

@@ -1,6 +1,15 @@
 #!/bin/bash
 
-TOKEN=`cat ${TOKEN_PATH}`
+AUTH=""
+
+# check for auth token
+if [ -z "$TOKEN_PATH" ]
+then
+    echo "Info: no token found"
+else
+    TOKEN=`cat ${TOKEN_PATH}`
+    AUTH="?access_token=${TOKEN}"
+fi
 
 # TARGET is the sensor being scraped
 : ${TARGET_BASE_URL:=wio-mock}
@@ -18,7 +27,7 @@ TOKEN=`cat ${TOKEN_PATH}`
 
 # Get temp reading
 echo "Info: getting ${TARGET_SENSOR}.."
-URL="${TARGET_BASE_URL}:${TARGET_BASE_PORT}/${TARGET_BASE_PATH}/${TARGET_SENSOR}/${TARGET_SENSOR_PATH}?access_token=${TOKEN}"
+URL="${TARGET_BASE_URL}:${TARGET_BASE_PORT}/${TARGET_BASE_PATH}/${TARGET_SENSOR}/${TARGET_SENSOR_PATH}${AUTH}"
 
 # debug
 echo "Debug: URL value is ${URL}"

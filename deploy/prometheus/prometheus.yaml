@@ -9,3 +9,5 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       app: prometheus-pushgateway
+  nodeSelector:
+      kubernetes.io/arch: amd64

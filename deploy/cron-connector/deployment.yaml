@@ -32,6 +32,7 @@ spec:
             - name: auth
               readOnly: true
               mountPath: "/var/secrets/"
+        resources: {}
       volumes:
       - name: auth
         secret:

@@ -1,0 +1,34 @@
+datasources: 
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-operated:9090
+      access: proxy
+      isDefault: true
+nodeSelector:
+    kubernetes.io/arch: amd64
+metrics:
+  enabled: "true"
+ingress:
+  enabled: "true"
+sidecar:
+  dashboards:
+    enabled: true
+    label: fleet-metrics
+notifiers:
+  notifiers.yaml:
+    notifiers:
+    - name: default
+      type: slack
+      uid: default
+      org_id: 1
+      is_default: true
+      send_reminder: true
+      frequency: 1h
+      disable_resolve_message: false
+      settings:
+        recipient: "dukeman_alerts"
+        uploadImage: true
+        url: "{{ .Env.SLACK_URL }}"
