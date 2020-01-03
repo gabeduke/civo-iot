@@ -11,7 +11,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-mock.yml
+    - wio/mock/environment.yml
     environment:
       TARGET_SENSOR: GroveTempHumD0
       TARGET_SENSOR_PATH: temperature_f
@@ -27,7 +27,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-mock.yml
+    - wio/mock/environment.yml
     environment:
       TARGET_SENSOR: GroveTempHumD0
       TARGET_SENSOR_PATH: temperature
@@ -43,7 +43,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-mock.yml
+    - wio/mock/environment.yml
     environment:
       TARGET_SENSOR: GroveDigitalLightI2C0
       TARGET_SENSOR_PATH: lux
@@ -59,7 +59,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-mock.yml
+    - wio/mock/environment.yml
     environment:
       TARGET_SENSOR: GroveAirqualityA0
       TARGET_SENSOR_PATH: quality
@@ -75,7 +75,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-mock.yml
+    - wio/mock/environment.yml
     environment:
       TARGET_SENSOR: GroveTempHumD0
       TARGET_SENSOR_PATH: humidity
@@ -91,7 +91,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-mock.yml
+    - wio/mock/environment.yml
     environment:
       TARGET_SENSOR: GenericAInA0
       TARGET_SENSOR_PATH: analog

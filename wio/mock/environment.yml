@@ -1,3 +1,4 @@
+# Base environment variables common across all functions
 environment:
   TARGET_BASE_URL: wio-mock.default.svc
   TARGET_BASE_PORT: 8080

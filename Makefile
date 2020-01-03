@@ -10,14 +10,23 @@ endif
 
 FAAS_BUILD_ARGS = --tag=branch
 FAAS_FN = fn-mock.yml
-# FAAS_FN = fn-wio.yml
+# FAAS_FN = fn-prod.yml
 FAAS_GATEWAY = http://$(INGRESS):31112
 
 .DEFAULT_GOAL := help
 .PHONY: all
 
-all:													## Deploy stack end to end
+all: 													## Deploy stack end to end
+all: FAAS_FN=fn-prod.yml
 all: provision deploy-core faas-create-secrets faas-up
+
+all-byoc: 												## Deploy stack end to end (bring your own cluster)
+all-byoc: FAAS_FN=fn-prod.yml
+all-byoc: deploy-core faas-create-secrets faas-up
+
+all-mock:												## Deploy stack end to end
+all-mock: FAAS_FN=fn-mock.yml
+all-mock: provision deploy-core faas-up
 
 ##########################################################
 ##@ CLUSTER

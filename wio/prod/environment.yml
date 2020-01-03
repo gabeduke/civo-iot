@@ -1,3 +1,4 @@
+# Base environment variables common across all functions
 environment:
   TARGET_BASE_URL: https://us.wio.seeed.io
   TARGET_BASE_PORT: 443

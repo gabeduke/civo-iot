@@ -11,7 +11,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-base.yml
+    - wio/prod/environment.yml
     secrets:
     - wio1
     environment:
@@ -30,7 +30,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-base.yml
+    - wio/prod/environment.yml
     secrets:
     - wio1
     environment:
@@ -49,7 +49,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-base.yml
+    - wio/prod/environment.yml
     secrets:
     - wio2
     environment:
@@ -68,7 +68,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-base.yml
+    - wio/prod/environment.yml
     secrets:
     - wio2
     environment:
@@ -87,7 +87,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-base.yml
+    - wio/prod/environment.yml
     secrets:
     - wio1
     environment:
@@ -106,7 +106,7 @@ functions:
       topic: cron-function
       schedule: "* * * * *"
     environment_file:
-    - wio/env-base.yml
+    - wio/prod/environment.yml
     secrets:
     - wio3
     environment:

@@ -18,9 +18,8 @@ WORKDIR /home/app
 
 USER app
 
-# Populate example here - i.e. "cat", "sha512sum" or "node index.js"
+# execute script
 ENV fprocess="xargs bash /tmp/wio"
-# Set to true to see request in function logs
 ENV write_debug="false"
 
 EXPOSE 8080
