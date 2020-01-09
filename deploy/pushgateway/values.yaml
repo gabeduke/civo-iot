@@ -5,5 +5,3 @@ serviceMonitor:
   namespace: "default"
   additionalLabels:
     app: prometheus-pushgateway
-nodeSelector:
-  kubernetes.io/arch: amd64

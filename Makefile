@@ -1,8 +1,11 @@
 include .env
 
-CLUSTER_NAME = civo-iot
+CLUSTER_NAME = sandbox
 CLUSTER_ID = $(shell curl -H "Authorization: bearer $(CIVO_TOKEN)" https://api.civo.com/v2/kubernetes/clusters | jq '.items[] | select(.name == "$(CLUSTER_NAME)") | .id')
 NAMESPACE = default
+#KUBECONFIG := --kubeconfig $$HOME/.kube/config
+KUBECTL := kubectl $(KUBECONFIG)
+HELM := helm $(KUBECONFIG)
 
 ifeq ($(INGRESS),)
 INGRESS = $(CLUSTER_ID).k8s.civo.com
@@ -14,7 +17,7 @@ FAAS_FN = fn-mock.yml
 FAAS_GATEWAY = http://$(INGRESS):31112
 
 .DEFAULT_GOAL := help
-.PHONY: all
+.PHONY: all all-byoc all-mock ingress
 
 all: 													## Deploy stack end to end
 all: FAAS_FN=fn-prod.yml
@@ -28,12 +31,15 @@ all-mock:												## Deploy stack end to end
 all-mock: FAAS_FN=fn-mock.yml
 all-mock: provision deploy-core faas-up
 
+ingress:
+	@echo "Ingress: $(INGRESS)"
+
 ##########################################################
 ##@ CLUSTER
 ##########################################################
 .PHONY: provision
 
-provision:												## Provision Cluster
+provision:												## Provision CIVO Cluster
 	$(info Provisioning cluster..)
 	@civo kubernetes create \
 		--nodes 2 \
@@ -49,24 +55,19 @@ deploy-core: 											## Deploy all core applications
 deploy-core: prometheus-operator prometheus pushgateway grafana openfaas cron-connector mock-server
 
 prometheus-operator:									## Deploy Prometheus Operator
-	$(info Deploying Prometheus Operator)
-	kubectl create namespace monitoring --dry-run -o yaml | kubectl apply -f -
-	helm repo update
-	helm upgrade --install \
-		--namespace monitoring \
-		--values deploy/prometheus-operator/values.yaml \
-		--version 8.5.0 \
-		--wait \
-		prometheus-operator stable/prometheus-operator
+	@$(info Deploying Prometheus Operator)
+	@$(KUBECTL) create namespace monitoring --dry-run -o yaml | $(KUBECTL) apply -f -
+	@$(KUBECTL) apply --wait -n default -f https://raw.githubusercontent.com/coreos/prometheus-operator/v0.34.0/bundle.yaml --all
+	@$(KUBECTL) wait -n default --for condition=established crds --all --timeout=60s
 
 prometheus:												## Deploy Prometheus
 	$(info Deploying Prometheus)
-	kubectl kustomize deploy/prometheus | kubectl apply -n $(NAMESPACE) -f -
+	$(KUBECTL) kustomize deploy/prometheus | $(KUBECTL) apply -n $(NAMESPACE) -f -
 
 pushgateway:											## Deploy Push Gateway
 	$(info Deploying Push Gateway)
-	helm repo update
-	helm upgrade --install \
+	$(HELM) repo update
+	$(HELM) upgrade --install \
 		--namespace $(NAMESPACE) \
 		--values deploy/pushgateway/values.yaml \
 		--version 1.2.5 \
@@ -80,7 +81,7 @@ grafana:												## Deploy Grafana
 		--volume $(CURDIR):/home \
 		--workdir /home \
 		jwilder/dockerize -template deploy/grafana/values.yaml > /tmp/grafana.yaml
-	@helm upgrade --install \
+	@$(HELM) upgrade --install \
 		--namespace $(NAMESPACE) \
 		--set adminPassword=$(ADMIN_PASSWORD) \
   		--set ingress.hosts[0]="grafana.$(INGRESS)" \
@@ -89,20 +90,20 @@ grafana:												## Deploy Grafana
 		--version 4.0.4 \
 		--wait \
 		grafana stable/grafana
-	@kubectl apply -f deploy/grafana/fleet-dashboard.yaml -n $(NAMESPACE)
+	@$(KUBECTL) apply -f deploy/grafana/fleet-dashboard.yaml -n $(NAMESPACE)
 
 openfaas:												## Deploy OpenFaaS
-	@kubectl apply -f https://raw.githubusercontent.com/openfaas/faas-netes/master/namespaces.yml
+	@$(KUBECTL) apply -f https://raw.githubusercontent.com/openfaas/faas-netes/master/namespaces.yml
 
-	@helm repo add openfaas https://openfaas.github.io/faas-netes/
+	@$(HELM) repo add openfaas https://openfaas.github.io/faas-netes/
 
-	@kubectl -n openfaas create secret generic basic-auth \
+	@$(KUBECTL) -n openfaas create secret generic basic-auth \
 	--from-literal=basic-auth-user=admin \
 	--from-literal=basic-auth-password="$(ADMIN_PASSWORD)" \
-	--dry-run -o yaml | kubectl apply -f -
+	--dry-run -o yaml | $(KUBECTL) apply -f -
 
-	@helm repo update
-	@helm upgrade --install \
+	@$(HELM) repo update
+	@$(HELM) upgrade --install \
 		--namespace openfaas  \
 		--set basic_auth=true \
 		--set functionNamespace=openfaas-fn \
@@ -112,12 +113,12 @@ openfaas:												## Deploy OpenFaaS
 
 cron-connector:											## Deploy Cron Connector
 	$(info Deploying Cron Connector)
-	kubectl apply -f deploy/cron-connector
+	$(KUBECTL) apply -f deploy/cron-connector
 
 mock-server:											## Deploy Mock Server
 	$(info Deploying Mock Server)
-	kubectl kustomize \
-		https://github.com/gabeduke/wio-mock/deploy?ref=master | kubectl apply -n $(NAMESPACE) -f -
+	$(KUBECTL) kustomize \
+		https://github.com/gabeduke/wio-mock/deploy?ref=master | $(KUBECTL) apply -n $(NAMESPACE) -f -
 
 ##########################################################
 ##@ Faas
@@ -150,24 +151,48 @@ faas-login:												## Log in to OpenFaaS
 	faas login --gateway $(FAAS_GATEWAY) -u admin -p $(ADMIN_PASSWORD)
 
 ##########################################################
+##@ DOCS
+##########################################################
+.PHONY: docs-build docs-serve
+
+docs-build:											## Build Static site
+	@cd docs && \
+	docker run --rm -it \
+		--volume="$$PWD:/srv/jekyll" \
+		--volume="$$PWD/vendor/bundle:/usr/local/bundle" \
+		--env JEKYLL_ENV=production \
+		jekyll/jekyll:3.8 \
+			jekyll build
+
+docs-serve:											## Serve Docs
+	@cd docs && \
+	docker run --rm -it \
+		--volume="$$PWD:/srv/jekyll" \
+		--volume="$$PWD/vendor/bundle:/usr/local/bundle" \
+		--publish 4000:4000 \
+		--env JEKYLL_ENV=production \
+		jekyll/jekyll:3.8 \
+			jekyll serve
+
+##########################################################
 ##@ UTIL
 ##########################################################
 .PHONY: proxies kill-proxies help clean
 
 proxies:												## Proxy all services
-	@kubectl port-forward svc/grafana -n $(NAMESPACE) 8080:80 &
+	@$(KUBECTL) port-forward svc/grafana -n $(NAMESPACE) 8080:80 &
 	@echo http://localhost:8080
 
-	@kubectl port-forward svc/prometheus-operated -n $(NAMESPACE) 9090:9090 &
+	@$(KUBECTL) port-forward svc/prometheus-operated -n $(NAMESPACE) 9090:9090 &
 	@echo http://localhost:9090
 
-	@kubectl port-forward svc/metrics-sink-prometheus-pushgateway -n $(NAMESPACE) 9091:9091 &
+	@$(KUBECTL) port-forward svc/metrics-sink-prometheus-pushgateway -n $(NAMESPACE) 9091:9091 &
 	@echo http://localhost:9091
 
-	@kubectl port-forward svc/wio-mock -n $(NAMESPACE) 8081:8080 &
+	@$(KUBECTL) port-forward svc/wio-mock -n $(NAMESPACE) 8081:8080 &
 	@echo http://localhost:8081
 
-	@kubectl port-forward svc/gateway -n openfaas 8082:8080 &
+	@$(KUBECTL) port-forward svc/gateway -n openfaas 8082:8080 &
 	@echo http://localhost:8082
 
 kill-proxies:											## Kill proxies (kills all kubectl proceses)
@@ -176,5 +201,5 @@ kill-proxies:											## Kill proxies (kills all kubectl proceses)
 help:													## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m 	%s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-clean:													## Destroy cluster
+clean: kill-proxies										## Destroy cluster
 	civo k8s delete $(CLUSTER_NAME)
