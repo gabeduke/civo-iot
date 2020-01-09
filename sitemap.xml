@@ -3,36 +3,36 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>civo-iot/about/</loc>
+    <loc>/about/</loc>
     <lastmod>2020-01-09T09:30:39-05:00</lastmod>
   </url>
   
   <url>
-    <loc>civo-iot/</loc>
+    <loc>/</loc>
     <lastmod>2020-01-09T09:30:39-05:00</lastmod>
   </url>
   
   <url>
-    <loc>civo-iot/posts/part2/</loc>
+    <loc>/posts/part2/</loc>
     <lastmod>2020-01-09T09:30:08-05:00</lastmod>
   </url>
   
   <url>
-    <loc>civo-iot/posts/</loc>
+    <loc>/posts/</loc>
     <lastmod>2020-01-09T09:30:08-05:00</lastmod>
   </url>
   
   <url>
-    <loc>civo-iot/posts/part1/</loc>
+    <loc>/posts/part1/</loc>
     <lastmod>2020-01-09T09:30:04-05:00</lastmod>
   </url>
   
   <url>
-    <loc>civo-iot/categories/</loc>
+    <loc>/categories/</loc>
   </url>
   
   <url>
-    <loc>civo-iot/tags/</loc>
+    <loc>/tags/</loc>
   </url>
   
 </urlset>
