@@ -1,9 +1,7 @@
 ---
-layout: default
-nav_order: 2
-title: "Civo IOT (Part 2)"
-date: 2020-01-08 18:26:26 -0600
-categories: jekyll update
+title: "Part2"
+date: 2020-01-09T09:30:08-05:00
+draft: false
 ---
 
 ## TL/DR
@@ -12,7 +10,7 @@ This guide documents a simple Prometheus PushGateway setup on top of [Civo's k3s
 
 The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components. The subsequent blogs will document building a native kubernetes operator to manage the sensor inputs.
 
-![Civo IOT Design](https://github.com/gabeduke/civo-iot/blob/master/docs/screenshots/project.png?raw=true)
+![Civo IOT Design](/project.png)
 
 ## Table of Contents
 

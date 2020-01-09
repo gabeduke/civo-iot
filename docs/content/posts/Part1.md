@@ -1,9 +1,7 @@
 ---
-layout: default
-nav_order: 1
-title: "Civo IOT (Part 1)"
-date: 2020-01-08 18:26:26 -0600
-categories: jekyll update
+title: "Part1"
+date: 2020-01-09T09:30:04-05:00
+draft: false
 ---
 
 ## TL/DR
@@ -12,7 +10,7 @@ This guide documents a simple Prometheus PushGateway setup on top of [Civo's k3s
 
 The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components. The subsequent blogs will document building a native kubernetes operator to manage the sensor inputs.
 
-![Civo IOT Design](https://github.com/gabeduke/civo-iot/blob/master/docs/screenshots/project.png?raw=true)
+![Civo IOT Design](/project.png)
 
 ## Table of Contents
 
@@ -149,7 +147,7 @@ deploy/manifest/prometheus
 To install we can build the directory with `kustomize` and pipe it directly to the cluster:
 
 ```bash
-TARGET="github.com/gabeduke/civo-iot/deploy/manifest/prometheus/?ref=master"
+TARGET="github.com/gabeduke/civo-iot/deploy/manifest/prometheus/?ref=1.0.0"
 
 # # If you have the repository checked out then you can uncomment the following line
 # TARGET=deploy/manifest/prometheus
@@ -214,7 +212,7 @@ http://localhost:9091
 
 Notice there is a new group for `sanity-test` and the data point `sample_metric` is equal to 1.
 
-![](https://github.com/gabeduke/civo-iot/blob/master/docs/screenshots/pushgateway.png?raw=true)
+![](/pushgateway.png)
 
 To see the raw metrics that prometheus will scrape, navigate to http://localhost:9091/metrics and notice the new line:
 
@@ -229,7 +227,7 @@ http://localhost:9090
 
 Prometheus is where the data will be aggregated and we can perform queries over time. Since we only have a single data point we will see a line in the graph when searching for `sample_metric`. As we build out the monitoring system we can add CRDs to generate alerts on our data.
 
-![](https://github.com/gabeduke/civo-iot/blob/master/docs/screenshots/prometheus.png?raw=true)
+![](/prometheus.png)
 
 ### Visualize in Grafana
 
@@ -241,7 +239,7 @@ Log in with the username `admin` and password will be `${PASSWORD}`. Again the v
 
 To validate our sample metric we are going to use the _Explore_ function. Navigate to http://localhost:8080/explore
 
-![](https://github.com/gabeduke/civo-iot/blob/master/docs/screenshots/grafana_explore.png?raw=true)
+![](/grafana_explore.png)
 
 ## Wrapping up
 
