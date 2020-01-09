@@ -1,6 +1,0 @@
-# Base environment variables common across all functions
-environment:
-  TARGET_BASE_URL: https://us.wio.seeed.io
-  TARGET_BASE_PORT: 443
-  TARGET_METRIC_GROUP: fleet-metrics
-  PROMETHEUS_HOST: http://metrics-sink-prometheus-pushgateway.default.svc
