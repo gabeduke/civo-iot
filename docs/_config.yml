@@ -24,7 +24,8 @@ github_username:  gabeduke
 
 # Build settings
 markdown: kramdown
-theme: jekyll-theme-leap-day
+theme: minima
+# remote_theme: pmarsceill/just-the-docs
 plugins:
   - jekyll-feed
 
