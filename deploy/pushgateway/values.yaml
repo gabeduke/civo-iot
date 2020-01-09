@@ -1,0 +1,7 @@
+metrics:
+  enabled: true
+serviceMonitor:
+  enabled: true
+  namespace: "default"
+  additionalLabels:
+    app: prometheus-pushgateway
