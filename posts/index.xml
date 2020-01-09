@@ -1,5 +1,22 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Adventures in over-engineering</title><link>/posts/</link><description>Recent content in Posts on Adventures in over-engineering</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 09 Jan 2020 09:30:08 -0500</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Part2</title><link>/posts/part2/</link><pubDate>Thu, 09 Jan 2020 09:30:08 -0500</pubDate><guid>/posts/part2/</guid><description>TL/DR This guide documents a simple Prometheus PushGateway setup on top of Civo's k3s offering. We will then push some data to the gateway and visualize it in Grafana.
-The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components.</description><content type="html"><![CDATA[<h2 id="tldr">TL/DR</h2>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Posts on Adventures in over-engineering</title>
+        <link>https://github.com/gabeduke/civo-iot/posts/</link>
+        <description>Recent content in Posts on Adventures in over-engineering</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>en-us</language>
+        <lastBuildDate>Thu, 09 Jan 2020 09:30:08 -0500</lastBuildDate>
+        <atom:link href="https://github.com/gabeduke/civo-iot/posts/index.xml" rel="self" type="application/rss+xml" />
+        
+        <item>
+            <title>Part2</title>
+            <link>https://github.com/gabeduke/civo-iot/posts/part2/</link>
+            <pubDate>Thu, 09 Jan 2020 09:30:08 -0500</pubDate>
+            
+            <guid>https://github.com/gabeduke/civo-iot/posts/part2/</guid>
+            <description>TL/DR This guide documents a simple Prometheus PushGateway setup on top of Civo&#39;s k3s offering. We will then push some data to the gateway and visualize it in Grafana.
+The end result for this project is an environmental monitoring system that gathers sensor data. I won&#39;t actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components.</description>
+            <content type="html"><![CDATA[<h2 id="tldr">TL/DR</h2>
 <p>This guide documents a simple Prometheus PushGateway setup on top of <a href="https://www.civo.com/kube100">Civo's k3s</a> offering. We will then push some data to the gateway and visualize it in Grafana.</p>
 <p>The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components. The subsequent blogs will document building a native kubernetes operator to manage the sensor inputs.</p>
 <p><img src="/project.png" alt="Civo IOT Design"></p>
@@ -63,8 +80,18 @@ export NAMESPACE<span style="color:#f92672">=</span>default
 <h2 id="visualize-data">Visualize data</h2>
 <h2 id="wrapping-up">Wrapping up</h2>
 <p>Congradulations! You now have the foundation for a batch metrics monitoring system! Keep an eye out for the next post where I will walk thorugh connecting real sensor data.</p>
-]]></content></item><item><title>Part1</title><link>/posts/part1/</link><pubDate>Thu, 09 Jan 2020 09:30:04 -0500</pubDate><guid>/posts/part1/</guid><description>TL/DR This guide documents a simple Prometheus PushGateway setup on top of Civo's k3s offering. We will then push some data to the gateway and visualize it in Grafana.
-The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components.</description><content type="html"><![CDATA[<h2 id="tldr">TL/DR</h2>
+]]></content>
+        </item>
+        
+        <item>
+            <title>Part1</title>
+            <link>https://github.com/gabeduke/civo-iot/posts/part1/</link>
+            <pubDate>Thu, 09 Jan 2020 09:30:04 -0500</pubDate>
+            
+            <guid>https://github.com/gabeduke/civo-iot/posts/part1/</guid>
+            <description>TL/DR This guide documents a simple Prometheus PushGateway setup on top of Civo&#39;s k3s offering. We will then push some data to the gateway and visualize it in Grafana.
+The end result for this project is an environmental monitoring system that gathers sensor data. I won&#39;t actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components.</description>
+            <content type="html"><![CDATA[<h2 id="tldr">TL/DR</h2>
 <p>This guide documents a simple Prometheus PushGateway setup on top of <a href="https://www.civo.com/kube100">Civo's k3s</a> offering. We will then push some data to the gateway and visualize it in Grafana.</p>
 <p>The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components. The subsequent blogs will document building a native kubernetes operator to manage the sensor inputs.</p>
 <p><img src="/project.png" alt="Civo IOT Design"></p>
@@ -254,4 +281,8 @@ sample_metric<span style="color:#f92672">{</span>instance<span style="color:#f92
 <p><img src="/grafana_explore.png" alt=""></p>
 <h2 id="wrapping-up">Wrapping up</h2>
 <p>Congradulations! You now have the foundation for a batch metrics monitoring system! Keep an eye out for the next post where I will walk thorugh connecting real sensor data.</p>
-]]></content></item></channel></rss>
+]]></content>
+        </item>
+        
+    </channel>
+</rss>
