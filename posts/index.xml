@@ -1,3 +1,257 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Adventures in over-engineering</title><link>/posts/</link><description>Recent content in Posts on Adventures in over-engineering</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 09 Jan 2020 09:30:08 -0500</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Part2</title><link>/posts/part2/</link><pubDate>Thu, 09 Jan 2020 09:30:08 -0500</pubDate><guid>/posts/part2/</guid><description>TL/DR This guide documents a simple Prometheus PushGateway setup on top of Civo's k3s offering. We will then push some data to the gateway and visualize it in Grafana.
-The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components.</description></item><item><title>Part1</title><link>/posts/part1/</link><pubDate>Thu, 09 Jan 2020 09:30:04 -0500</pubDate><guid>/posts/part1/</guid><description>TL/DR This guide documents a simple Prometheus PushGateway setup on top of Civo's k3s offering. We will then push some data to the gateway and visualize it in Grafana.
-The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components.</description></item></channel></rss>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Adventures in over-engineering</title><link>/posts/</link><description>Recent content in Posts on Adventures in over-engineering</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Thu, 09 Jan 2020 09:30:08 -0500</lastBuildDate><atom:link href="/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Part2</title><link>/posts/part2/</link><pubDate>Thu, 09 Jan 2020 09:30:08 -0500</pubDate><guid>/posts/part2/</guid><description>TL/DR This guide documents a simple Prometheus PushGateway setup on top of Civo's k3s offering. We will then push some data to the gateway and visualize it in Grafana.
+The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components.</description><content type="html"><![CDATA[<h2 id="tldr">TL/DR</h2>
+<p>This guide documents a simple Prometheus PushGateway setup on top of <a href="https://www.civo.com/kube100">Civo's k3s</a> offering. We will then push some data to the gateway and visualize it in Grafana.</p>
+<p>The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components. The subsequent blogs will document building a native kubernetes operator to manage the sensor inputs.</p>
+<p><img src="/project.png" alt="Civo IOT Design"></p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<!-- raw HTML omitted -->
+<ul>
+<li><a href="#tldr">TL/DR</a></li>
+<li><a href="#table-of-contents">Table of Contents</a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#pre-requisites">Pre-requisites</a>
+<ul>
+<li><a href="#tools">Tools</a></li>
+<li><a href="#setup">Setup</a></li>
+</ul>
+</li>
+<li><a href="#provision-operator">Provision Operator</a></li>
+<li><a href="#visualize-data">Visualize data</a></li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+<!-- raw HTML omitted -->
+<h2 id="summary">Summary</h2>
+<p>Prometheus PushGateway is a very useful tool to visualize batch metrics. This guide will walk through setting up a pushgateway instance and logging metrics from a simple BASH script. This is a great way to quickly visualize data <em>external</em> to kubernetes in a dead simple, sysadmin friendly way. The actual purpose of this project is to pull IOT sensor data into Prometheus, but I have tried to keep things as generic as possible in this first guide. In the next post I will begin building out the data logging functions into a kubernetes native operator.</p>
+<p>The stack is deployed to <a href="https://www.civo.com/">Civo</a> cloud which runs a slimmed down flavor of kubernetes, called <a href="https://github.com/rancher/k3s">k3s</a>.</p>
+<p>Components:</p>
+<ul>
+<li>K3s Cluster installed through Civo Cloud</li>
+<li>Prometheus Operator (installed alongside the cluster via Civo marketplace)</li>
+<li>PushGateway (installed via Helm)</li>
+<li>Grafana (installed via Helm)</li>
+</ul>
+<h2 id="pre-requisites">Pre-requisites</h2>
+<h3 id="tools">Tools</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/civo/cli#set-up">Civo-CLI</a></td>
+<td>v0.5.1</td>
+</tr>
+<tr>
+<td><a href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">Kubectl</a></td>
+<td>v1.16.3</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Notes</strong>:</p>
+<ul>
+<li><a href="https://kustomize.io/">Kustomize</a>: is part of the kubectl binary since v1.15. Generally helm is used for doing the heavy lifting creating an application, and kustomize steps in for the lighter pieces that require last minute transforms.</li>
+<li>K3s ships with a helm operator that takes a CRD which can be applied with <code>kubectl</code>. This guide will deploy grafana and pushgateway using this method. More information can be found <a href="https://rancher.com/docs/k3s/latest/en/configuration/#auto-deploying-manifests">here</a></li>
+</ul>
+<h3 id="setup">Setup</h3>
+<p>Before getting started let's export some variables so they will be available throughout this guide. We also want to update our helm repo with the latest charts:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export CLUSTER_NAME<span style="color:#f92672">=</span>civo-iot-<span style="color:#66d9ef">$(</span>whoami<span style="color:#66d9ef">)</span>
+export NAMESPACE<span style="color:#f92672">=</span>default
+</code></pre></div><h2 id="provision-operator">Provision Operator</h2>
+<h2 id="visualize-data">Visualize data</h2>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>Congradulations! You now have the foundation for a batch metrics monitoring system! Keep an eye out for the next post where I will walk thorugh connecting real sensor data.</p>
+]]></content></item><item><title>Part1</title><link>/posts/part1/</link><pubDate>Thu, 09 Jan 2020 09:30:04 -0500</pubDate><guid>/posts/part1/</guid><description>TL/DR This guide documents a simple Prometheus PushGateway setup on top of Civo's k3s offering. We will then push some data to the gateway and visualize it in Grafana.
+The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components.</description><content type="html"><![CDATA[<h2 id="tldr">TL/DR</h2>
+<p>This guide documents a simple Prometheus PushGateway setup on top of <a href="https://www.civo.com/kube100">Civo's k3s</a> offering. We will then push some data to the gateway and visualize it in Grafana.</p>
+<p>The end result for this project is an environmental monitoring system that gathers sensor data. I won't actually deploy the scrape jobs in this guide, but we will send a metric with curl and visualize it in each of the core components. The subsequent blogs will document building a native kubernetes operator to manage the sensor inputs.</p>
+<p><img src="/project.png" alt="Civo IOT Design"></p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<!-- raw HTML omitted -->
+<ul>
+<li><a href="#tldr">TL/DR</a></li>
+<li><a href="#table-of-contents">Table of Contents</a></li>
+<li><a href="#summary">Summary</a></li>
+<li><a href="#pre-requisites">Pre-requisites</a>
+<ul>
+<li><a href="#tools">Tools</a></li>
+<li><a href="#setup">Setup</a></li>
+</ul>
+</li>
+<li><a href="#provision-cluster">Provision Cluster</a></li>
+<li><a href="#deploy-core-applications">Deploy Core Applications</a>
+<ul>
+<li><a href="#install-grafana">Install Grafana</a></li>
+<li><a href="#install-prometheus">Install Prometheus</a></li>
+<li><a href="#install-push-gateway">Install Push-Gateway</a></li>
+</ul>
+</li>
+<li><a href="#visualize-data">Visualize data</a>
+<ul>
+<li><a href="#visualize-in-pushgateway">Visualize in PushGateway</a></li>
+<li><a href="#visualize-in-prometheus">Visualize in Prometheus</a></li>
+<li><a href="#visualize-in-grafana">Visualize in Grafana</a></li>
+</ul>
+</li>
+<li><a href="#wrapping-up">Wrapping up</a></li>
+</ul>
+<!-- raw HTML omitted -->
+<h2 id="summary">Summary</h2>
+<p>Prometheus PushGateway is a very useful tool to visualize batch metrics. This guide will walk through setting up a pushgateway instance and logging metrics from a simple BASH script. This is a great way to quickly visualize data <em>external</em> to kubernetes in a dead simple, sysadmin friendly way. The actual purpose of this project is to pull IOT sensor data into Prometheus, but I have tried to keep things as generic as possible in this first guide. In the next post I will begin building out the data logging functions into a kubernetes native operator.</p>
+<p>The stack is deployed to <a href="https://www.civo.com/">Civo</a> cloud which runs a slimmed down flavor of kubernetes, called <a href="https://github.com/rancher/k3s">k3s</a>.</p>
+<p>Components:</p>
+<ul>
+<li>K3s Cluster installed through Civo Cloud</li>
+<li>Prometheus Operator (installed alongside the cluster via Civo marketplace)</li>
+<li>PushGateway (installed via Helm)</li>
+<li>Grafana (installed via Helm)</li>
+</ul>
+<h2 id="pre-requisites">Pre-requisites</h2>
+<h3 id="tools">Tools</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/civo/cli#set-up">Civo-CLI</a></td>
+<td>v0.5.1</td>
+</tr>
+<tr>
+<td><a href="https://kubernetes.io/docs/tasks/tools/install-kubectl/">Kubectl</a></td>
+<td>v1.16.3</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Notes</strong>:</p>
+<ul>
+<li><a href="https://kustomize.io/">Kustomize</a>: is part of the kubectl binary since v1.15. Generally helm is used for doing the heavy lifting creating an application, and kustomize steps in for the lighter pieces that require last minute transforms.</li>
+<li>K3s ships with a helm operator that takes a CRD which can be applied with <code>kubectl</code>. This guide will deploy grafana and pushgateway using this method. More information can be found <a href="https://rancher.com/docs/k3s/latest/en/configuration/#auto-deploying-manifests">here</a></li>
+</ul>
+<h3 id="setup">Setup</h3>
+<p>Before getting started let's export some variables so they will be available throughout this guide. We also want to update our helm repo with the latest charts:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export CLUSTER_NAME<span style="color:#f92672">=</span>civo-iot-<span style="color:#66d9ef">$(</span>whoami<span style="color:#66d9ef">)</span>
+export NAMESPACE<span style="color:#f92672">=</span>default
+</code></pre></div><h2 id="provision-cluster">Provision Cluster</h2>
+<p>The first step is to provision a K3s cluster using the <a href="https://www.civo.com/learn/kubernetes-cluster-administration-using-civo-cli">Civo CLI</a>.</p>
+<p>This will take a couple minutes, once finished the <code>--save</code> flag wil point your kubectl context to the new cluster.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">civo kubernetes create <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    --applications prometheus-operator <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    --nodes <span style="color:#ae81ff">2</span> <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    --save --switch --wait <span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span>    <span style="color:#e6db74">${</span>CLUSTER_NAME<span style="color:#e6db74">}</span>
+</code></pre></div><p>We are initializing the cluster with the <code>prometheus-operator</code> application from the <a href="https://github.com/civo/kubernetes-marketplace">Civo Marketplace</a>. Once the cluster has finished booting you can explore the default cluster monitors, provisioned by the prometheus operator. First port-forward to the grafana instance: <code>kubectl port-forward svc/prometheus-operator-grafana 8080:80 --namespace monitoring</code> and navigate to <code>http://localhost:8080</code> . You can log in with the username <code>admin</code> and the password <code>prom-operator</code>. Not every dashboard will work since the k3s distribution has a slightly different topology then a vanilla kubernetes cluster.</p>
+<p>In the next steps we will provision our own instances of Prometheus and Grafana.</p>
+<h2 id="deploy-core-applications">Deploy Core Applications</h2>
+<p>The stack consists of a few core applications, and jobs to fetch the data.</p>
+<ul>
+<li><strong>Grafana</strong>: is a powerful visualization tool we will use for displaying our metrics. This could be considered the &lsquo;frontend&rsquo; of our application.</li>
+<li><strong>Prometheus</strong>: is a time-series database that scales incredibly well. This is our &lsquo;backend&rsquo;. Prometheus is generally configured to scrape metrics data from applications on regular intervals.</li>
+<li><strong>PushGateway</strong>: is a &lsquo;sink&rsquo; or &lsquo;buffer&rsquo; for metric data that is too short lived for Prometheus to scrape. This is what our cron jobs will log data to since the containers wont live long enough for Prometheus to ever see them.</li>
+</ul>
+<h3 id="install-grafana">Install Grafana</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#75715e"># deploy/charts/grafana.yaml</span>
+#
+cat <span style="color:#e6db74">&lt;&lt;EOF &gt; /tmp/grafana.yaml
+</span><span style="color:#e6db74">apiVersion: helm.cattle.io/v1
+</span><span style="color:#e6db74">kind: HelmChart
+</span><span style="color:#e6db74">metadata:
+</span><span style="color:#e6db74">  name: grafana
+</span><span style="color:#e6db74">  namespace: kube-system
+</span><span style="color:#e6db74">spec:
+</span><span style="color:#e6db74">  chart: stable/grafana
+</span><span style="color:#e6db74">  version: 4.0.4
+</span><span style="color:#e6db74">  targetNamespace: default
+</span><span style="color:#e6db74">  valuesContent: |-
+</span><span style="color:#e6db74">    datasources:
+</span><span style="color:#e6db74">      datasources.yaml:
+</span><span style="color:#e6db74">        apiVersion: 1
+</span><span style="color:#e6db74">        datasources:
+</span><span style="color:#e6db74">        - name: Prometheus
+</span><span style="color:#e6db74">          type: prometheus
+</span><span style="color:#e6db74">          url: http://prometheus-operated:9090
+</span><span style="color:#e6db74">          access: proxy
+</span><span style="color:#e6db74">          isDefault: true
+</span><span style="color:#e6db74">EOF</span>
+
+<span style="color:#75715e"># Apply the chart</span>
+kubectl apply -f /tmp/grafana.yaml
+</code></pre></div><h3 id="install-prometheus">Install Prometheus</h3>
+<p>When we provisioned the cluster we installed the prometheus operator which installs an instance of prometheus by default. This instance is used for monitoring the cluster so we generally want to avoid using it for application data. Luckily operators make it super easy to spawn new instances. We simply need to create a Prometheus CRD and attach some RBAC permissions.</p>
+<p>This is what the directory tree looks like:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">deploy/manifest/prometheus
+├── kustomization.yaml
+├── prometheus-rolebinding.yaml
+├── prometheus-role.yaml
+├── prometheus-sa.yaml
+└── prometheus.yaml
+</code></pre></div><p>To install we can build the directory with <code>kustomize</code> and pipe it directly to the cluster:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">TARGET<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;github.com/gabeduke/civo-iot/deploy/manifest/prometheus/?ref=1.0.0&#34;</span>
+
+<span style="color:#75715e"># # If you have the repository checked out then you can uncomment the following line</span>
+<span style="color:#75715e"># TARGET=deploy/manifest/prometheus</span>
+
+kubectl kustomize <span style="color:#e6db74">${</span>TARGET<span style="color:#e6db74">}</span> | kubectl apply -n <span style="color:#e6db74">${</span>NAMESPACE<span style="color:#e6db74">}</span> -f -
+
+</code></pre></div><h3 id="install-push-gateway">Install Push-Gateway</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#75715e"># deploy/charts/pushgateway.yaml</span>
+#
+cat <span style="color:#e6db74">&lt;&lt;EOF &gt; /tmp/pushgateway.yaml
+</span><span style="color:#e6db74">apiVersion: helm.cattle.io/v1
+</span><span style="color:#e6db74">kind: HelmChart
+</span><span style="color:#e6db74">metadata:
+</span><span style="color:#e6db74">  name: metrics-sink
+</span><span style="color:#e6db74">  namespace: kube-system
+</span><span style="color:#e6db74">spec:
+</span><span style="color:#e6db74">  chart: stable/prometheus-pushgateway
+</span><span style="color:#e6db74">  version: 1.2.5
+</span><span style="color:#e6db74">  targetNamespace: default
+</span><span style="color:#e6db74">  set:
+</span><span style="color:#e6db74">    metrics.enabled: &#34;true&#34;
+</span><span style="color:#e6db74">    serviceMonitor.enabled: &#34;true&#34;
+</span><span style="color:#e6db74">    serviceMonitor.namespace: &#34;default&#34;
+</span><span style="color:#e6db74">EOF</span>
+
+<span style="color:#75715e"># Apply the chart</span>
+kubectl apply -f /tmp/pushgateway.yaml
+</code></pre></div><h2 id="visualize-data">Visualize data</h2>
+<p>Lets validate that the services are all working by pushing a data point to PushGateway manually.</p>
+<p>Wait until alll pods are running and then start the proxies:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">
+<span style="color:#75715e"># Proxy Grafana</span>
+kubectl port-forward svc/grafana -n <span style="color:#e6db74">${</span>NAMESPACE<span style="color:#e6db74">}</span> 8080:80 &amp;
+
+<span style="color:#75715e"># Proxy Prometheus</span>
+kubectl port-forward svc/prometheus-operated -n <span style="color:#e6db74">${</span>NAMESPACE<span style="color:#e6db74">}</span> 9090:9090 &amp;
+
+<span style="color:#75715e"># Proxy PushGateway</span>
+kubectl port-forward svc/metrics-sink-prometheus-pushgateway -n <span style="color:#e6db74">${</span>NAMESPACE<span style="color:#e6db74">}</span> 9091:9091 &amp;
+</code></pre></div><p>Once the proxies are active you can drop a metric onto the pushgateway:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">echo <span style="color:#e6db74">&#34;sample_metric 1&#34;</span> | curl --silent --data-binary @- <span style="color:#e6db74">&#34;http://localhost:9091/metrics/job/sanity-test&#34;</span>
+</code></pre></div><h3 id="visualize-in-pushgateway">Visualize in PushGateway</h3>
+<p>http://localhost:9091</p>
+<p>Notice there is a new group for <code>sanity-test</code> and the data point <code>sample_metric</code> is equal to 1.</p>
+<p><img src="/pushgateway.png" alt=""></p>
+<p>To see the raw metrics that prometheus will scrape, navigate to http://localhost:9091/metrics and notice the new line:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#75715e"># TYPE sample_metric untyped</span>
+sample_metric<span style="color:#f92672">{</span>instance<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;&#34;</span>,job<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;sanity-test&#34;</span><span style="color:#f92672">}</span> <span style="color:#ae81ff">1</span>
+</code></pre></div><h3 id="visualize-in-prometheus">Visualize in Prometheus</h3>
+<p>http://localhost:9090</p>
+<p>Prometheus is where the data will be aggregated and we can perform queries over time. Since we only have a single data point we will see a line in the graph when searching for <code>sample_metric</code>. As we build out the monitoring system we can add CRDs to generate alerts on our data.</p>
+<p><img src="/prometheus.png" alt=""></p>
+<h3 id="visualize-in-grafana">Visualize in Grafana</h3>
+<p>Grafana is where we will compile dashboards to display Prometheus queries.</p>
+<p>To get the password from the next step: <code>kubectl get secret --namespace default grafana -o jsonpath=&quot;{.data.admin-password}&quot; | base64 --decode ; echo</code></p>
+<p>Log in with the username <code>admin</code> and password will be <code>${PASSWORD}</code>. Again the visualization is not very interesting with a single data point but this is a simple sanity test.</p>
+<p>To validate our sample metric we are going to use the <em>Explore</em> function. Navigate to http://localhost:8080/explore</p>
+<p><img src="/grafana_explore.png" alt=""></p>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>Congradulations! You now have the foundation for a batch metrics monitoring system! Keep an eye out for the next post where I will walk thorugh connecting real sensor data.</p>
+]]></content></item></channel></rss>
