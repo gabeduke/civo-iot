@@ -151,30 +151,6 @@ faas-login:												## Log in to OpenFaaS
 	faas login --gateway $(FAAS_GATEWAY) -u admin -p $(ADMIN_PASSWORD)
 
 ##########################################################
-##@ DOCS
-##########################################################
-.PHONY: docs-build docs-serve
-
-docs-build:											## Build Static site
-	@cd docs && \
-	docker run --rm -it \
-		--volume="$$PWD:/srv/jekyll" \
-		--volume="$$PWD/vendor/bundle:/usr/local/bundle" \
-		--env JEKYLL_ENV=production \
-		jekyll/jekyll:3.8 \
-			jekyll build
-
-docs-serve:											## Serve Docs
-	@cd docs && \
-	docker run --rm -it \
-		--volume="$$PWD:/srv/jekyll" \
-		--volume="$$PWD/vendor/bundle:/usr/local/bundle" \
-		--publish 4000:4000 \
-		--env JEKYLL_ENV=production \
-		jekyll/jekyll:3.8 \
-			jekyll serve
-
-##########################################################
 ##@ UTIL
 ##########################################################
 .PHONY: proxies kill-proxies help clean
