@@ -1,6 +1,6 @@
 include .env
 
-CLUSTER_NAME = sandbox
+CLUSTER_NAME = civo-iot
 CLUSTER_ID = $(shell curl -H "Authorization: bearer $(CIVO_TOKEN)" https://api.civo.com/v2/kubernetes/clusters | jq '.items[] | select(.name == "$(CLUSTER_NAME)") | .id')
 NAMESPACE = default
 #KUBECONFIG := --kubeconfig $$HOME/.kube/config
@@ -58,6 +58,7 @@ prometheus-operator:									## Deploy Prometheus Operator
 	@$(info Deploying Prometheus Operator)
 	@$(KUBECTL) create namespace monitoring --dry-run -o yaml | $(KUBECTL) apply -f -
 	@$(KUBECTL) apply --wait -n default -f https://raw.githubusercontent.com/coreos/prometheus-operator/v0.34.0/bundle.yaml --all
+	@sleep 5
 	@$(KUBECTL) wait -n default --for condition=established crds --all --timeout=60s
 
 prometheus:												## Deploy Prometheus
@@ -172,7 +173,7 @@ proxies:												## Proxy all services
 	@echo http://localhost:8082
 
 kill-proxies:											## Kill proxies (kills all kubectl proceses)
-	pkill kubectl
+	pkill kubectl || true
 
 help:													## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m 	%s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
